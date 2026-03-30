@@ -4,13 +4,9 @@
 #include<string.h>
 #include<stdlib.h>
 #include<ctype.h>
+#include "history.h"
 
-//main format of History
-typedef struct history {
-    char **entries;
-    int size;
-    int capacity;
-} History;
+
 
 
 /* History part */
@@ -33,7 +29,7 @@ void history_init(History *h)
 //We will now add history appending as user enters
 void history_add(History *h, const char *cmd)
 {
-    if(h->size == 128)
+    if(h->size == MAX_SIZE)
     {
         printf("Capacity Full!\n");
         return;
@@ -50,11 +46,7 @@ h->entries = temp;
 h->capacity = new_capacity;
     }
     h->entries[h->size] = strdup(cmd);
-    if(h->entries[h->size] == NULL)
-    {
-    printf("Memory allocation failed!\n");
-    return;
-    }
+
     (h->size)++;
 
     return;
@@ -91,9 +83,6 @@ void history_free(History *h)
         free(h->entries[i]);
     }
     free(h->entries);
-
-    printf("Successfully deleted History.\n");
-
     return;
 }
 
@@ -104,8 +93,9 @@ char* history_expand(History *h,  char *input)
 {
     if (h->size == 0)
         return NULL;
-
-    return strdup(h->entries[h->size - 1]);
+    char *cmd = strdup(h->entries[h->size - 1]);
+    if(!cmd) return NULL;
+    return cmd;
 }
   
 
@@ -123,13 +113,15 @@ char* history_expand(History *h,  char *input)
            
         }
         
-     char *cmd = history_get(h, index);
+        
+    const char *cmd = history_get(h, index);
 if (!cmd) return NULL;
 
 return strdup(cmd);
     }
-    
-    return strdup(input);
+    char *cmd = strdup(input);
+    if (!cmd) return NULL;
+    return cmd;
     }
 
 //Saving history 
