@@ -27,6 +27,27 @@ int string_compare(const char *string1 ,const char *string2)
     return string1[i] == '\0' && string2[i] == '\0';
 }
 
+//parsing function 
+void parsing(char* input,char **arg)
+{
+    // Tokenize input
+        
+        int i = 0;
+
+        char *token = strtok(input, " ");
+        while(token != NULL)
+        {
+            if(i >= MAX_SIZE - 1) break;
+            (arg[i]) = token;
+            token = strtok(NULL, " ");
+            i++;
+        }
+
+        arg[i] = NULL;
+        return;
+}
+
+
 int main()
 {
     History *h = malloc(sizeof(History));
@@ -61,7 +82,7 @@ int main()
             break;
         }
 
-       
+       if(input[0] == '\0') continue;
 
         // Expand history
         char *expand = history_expand(h, input);
@@ -86,24 +107,121 @@ int main()
             continue;
         }
 
+        //Special parsing case
+        char *pipe_pos = strchr(input,'|');
+
+     if(pipe_pos != NULL)
+     {
+        //Enter pipe mode parsing and execution
+         *pipe_pos = '\0';
+
+         char *left = input;
+         if(left[0] == '\0') continue;
+         char *end = left + strlen(left) - 1 ;
+         
+         while(end > left && *end == ' ')
+         {
+         *end = '\0';
+         end--;
+         }
+         
+         char *right;
+           right = pipe_pos + 1 ;
+         while(*right == ' ') right++;
+
+       
+
+          //left string parsing
+         char *args1[MAX_SIZE];
+
+
+          // Tokenize input
+        parsing(left,args1);
+
+
+        //Right string parsing
+         char *args2[MAX_SIZE];
+
+          // Tokenize input
+       parsing(right,args2);
+
+
+       if(args1[0] == NULL || args2[0] == NULL)
+    continue;
+
+        //PIPES 
+
+         int fd[2];
+
+         if(pipe(fd) == -1)
+         {
+            perror("Pipe failed!");
+            continue;
+         }
+
+         //First fork process for executing command and changing standard input file
+         pid_t pid1 = fork();
+
+         if(pid1 == -1)
+         {
+            perror("fork failed");
+            close(fd[0]);
+            close(fd[1]);
+            continue;
+         }
+
+         //Child process 1 to make process of left string and changing file descriptor to fd[1]
+         if(pid1 == 0)
+         {
+            dup2(fd[1],STDOUT_FILENO); //stdout maps to pipe stdout --> pipe
+            close(fd[0]);
+            close(fd[1]);
+            execvp(args1[0],args1);
+            perror(args1[0]);
+            exit(1);
+         }
+         
+            //Child process 2 to make process of reading parallely and run command of right string with connecting pipe
+        pid_t pid2 = fork();
+
+        if(pid2 == -1)
+        {
+        perror("fork failed");
+        close(fd[0]);
+        close(fd[1]);
+        continue;
+        }
+
+        if(pid2 == 0)
+        {
+        dup2(fd[0],STDIN_FILENO);
+        close(fd[0]);
+        close(fd[1]);
+        execvp(args2[0],args2);
+        perror(args2[0]);
+        exit(1);
+        }
         
+    //parent waiting for child process
+        close(fd[0]);
+        close(fd[1]);
+
+        waitpid(pid1,NULL,0);
+        waitpid(pid2,NULL,0);
+        continue;
+        
+     
+    }
+        //Enter normal mode parsing and execution
+     
 
         // Tokenize input
         char *args[MAX_SIZE];
-        int i = 0;
-
-        char *token = strtok(input, " ");
-        while(token != NULL)
-        {
-            if(i >= MAX_SIZE - 1) break;
-            args[i++] = token;
-            token = strtok(NULL, " ");
-        }
-
-        if(i == 0) continue;
-
-        args[i] = NULL;
-
+       
+        //parsing
+        parsing(input,args);
+    
+    
         // ---------------- BUILT-IN COMMANDS ----------------
 
         // cd
@@ -155,9 +273,10 @@ int main()
         {
             // PARENT: wait
             wait(NULL);
-        }
+        
     }
      
+}
     free(h);
     return 0;
 }
