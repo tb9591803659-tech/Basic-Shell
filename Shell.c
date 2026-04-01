@@ -112,105 +112,108 @@ int main()
 
      if(pipe_pos != NULL)
      {
-        //Enter pipe mode parsing and execution
-         *pipe_pos = '\0';
+        
+    char* commands[100];
 
-         char *left = input;
-         if(left[0] == '\0') continue;
-         char *end = left + strlen(left) - 1 ;
-         
-         while(end > left && *end == ' ')
-         {
-         *end = '\0';
-         end--;
-         }
-         
-         char *right;
-           right = pipe_pos + 1 ;
-         while(*right == ' ') right++;
+    int i = 0;
+    char *token = strtok(input, "|");
 
-       
+    // split commands
+    while(token != NULL)
+    {
+        while(*token == ' ') token++; // trim front
 
-          //left string parsing
-         char *args1[MAX_SIZE];
+        char *end = token + strlen(token) - 1;
+        while(end > token && *end == ' ')
+        {
+            *end = '\0';
+            end--;
+        }
 
+        commands[i++] = token;
+        token = strtok(NULL, "|");
+    }
 
-          // Tokenize input
-        parsing(left,args1);
+    int fd[2];
+    
+    int prev_fd = -1;
 
+    pid_t pid[100];
+    for(int k = 0; k < i ; k++)
+    {
+        char *args[MAX_SIZE];
+        parsing(commands[k], args);
+          
+        if(args[0] == NULL) continue;
 
-        //Right string parsing
-         char *args2[MAX_SIZE];
-
-          // Tokenize input
-       parsing(right,args2);
-
-
-       if(args1[0] == NULL || args2[0] == NULL)
-    continue;
-
-        //PIPES 
-
-         int fd[2];
-
-         if(pipe(fd) == -1)
-         {
-            perror("Pipe failed!");
-            continue;
-         }
-
-         //First fork process for executing command and changing standard input file
-         pid_t pid1 = fork();
-
-         if(pid1 == -1)
-         {
-            perror("fork failed");
-            close(fd[0]);
-            close(fd[1]);
-            continue;
-         }
-
-         //Child process 1 to make process of left string and changing file descriptor to fd[1]
-         if(pid1 == 0)
-         {
-            dup2(fd[1],STDOUT_FILENO); //stdout maps to pipe stdout --> pipe
-            close(fd[0]);
-            close(fd[1]);
-            execvp(args1[0],args1);
-            perror(args1[0]);
+        if(k < i - 1)
+        {
+        if(pipe(fd) == -1)
+        {
+            perror("pipe failed");
             exit(1);
-         }
-         
-            //Child process 2 to make process of reading parallely and run command of right string with connecting pipe
-        pid_t pid2 = fork();
+        }
+    }
 
-        if(pid2 == -1)
+         pid[k] = fork();
+
+if(pid[k] < 0)
+{
+    perror("fork failed");
+    exit(1);
+}
+
+        if(pid[k] == 0) // child
         {
-        perror("fork failed");
-        close(fd[0]);
-        close(fd[1]);
-        continue;
+            // input from previous pipe
+            if(prev_fd != -1)
+            {
+                if(dup2(prev_fd, STDIN_FILENO) == -1)
+                {
+                    perror("dup2 failed");
+                    exit(1);
+                }
+                close(prev_fd);
+            }
+
+            // output to next pipe
+            if(k < i - 1)
+            {
+                if(dup2(fd[1], STDOUT_FILENO) == -1)
+                {
+                    perror("dup2 failed");
+                    exit(1);
+                }
+                close(fd[0]);
+                close(fd[1]);
+            }
+
+            execvp(args[0], args);
+            perror(args[0]);
+            exit(1);
         }
 
-        if(pid2 == 0)
-        {
-        dup2(fd[0],STDIN_FILENO);
-        close(fd[0]);
-        close(fd[1]);
-        execvp(args2[0],args2);
-        perror(args2[0]);
-        exit(1);
-        }
-        
-    //parent waiting for child process
-        close(fd[0]);
-        close(fd[1]);
+        // parent
+        if(prev_fd != -1)
+            close(prev_fd);
 
-        waitpid(pid1,NULL,0);
-        waitpid(pid2,NULL,0);
-        continue;
-        
-     
+        if(k < i - 1)
+        {
+            close(fd[1]);
+            prev_fd = fd[0];
+        }
+    
+
+    // wait for all children
+    
+    }
+    
+    for(int k = 0; k < i; k++)
+{
+    waitpid(pid[k],NULL,0);
+}
+
+     continue;
     }
         //Enter normal mode parsing and execution
      
