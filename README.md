@@ -8,11 +8,11 @@ This project demonstrates core Operating System concepts such as process creatio
 
 ## 📁 Project Structure
 
-Basic-Shell/
-├── Shell.c        → Main shell implementation (command execution, pipes, built-ins)
-├── history.c      → Command history system implementation
-├── history.h      → Header file for history module
-├── History.txt    → Persistent command history file (auto-generated)
+Basic-Shell/<br>
+├── Shell.c        → Main shell implementation (command execution, pipes, built-ins)<br>
+├── history.c      → Command history system implementation<br>
+├── history.h      → Header file for history module<br>
+├── History.txt    → Persistent command history file (auto-generated)<br>
 
 ---
 
