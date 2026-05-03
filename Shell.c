@@ -153,7 +153,7 @@ int main()
             perror("pipe failed");
             exit(1);
         }
-    }
+       }
 
          pid[k] = fork();
 

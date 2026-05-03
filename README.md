@@ -48,6 +48,8 @@ Basic-Shell/
 ### 🔗 Pipeline Support
 Supports multi-command pipelines:
 
+---
+
 ### 🧠 Concepts Used
 - Process Management (`fork`, `execvp`, `waitpid`)
 - Inter-Process Communication (`pipe`, `dup2`)
@@ -57,6 +59,8 @@ Supports multi-command pipelines:
 - Command Execution in Unix-like systems
 - Data Structures (Dynamic array implementation for command history)
 - System Calls in Linux environment
+
+---
 
 ### ⚠️ Known Limitations
 - No support for input/output redirection (`>`, `<`, `>>`)
@@ -68,6 +72,8 @@ Supports multi-command pipelines:
 - No command autocomplete or suggestion system
 - Error handling can be improved for system call failures
 - No support for environment variables (`export`, `$VAR`)
+
+---
 
 - ### 🔧 Future Improvements
 - Add input/output redirection (`>`, `<`, `>>`)
@@ -81,6 +87,8 @@ Supports multi-command pipelines:
 - Add job control system (`jobs`, `fg`, `bg`)
 - Improve error handling for all system calls
 
+---
+
 - ### 📌 What This Project Demonstrates
 - - Understanding of Unix/Linux shell internals
 - Process creation and management using system calls
@@ -89,6 +97,8 @@ Supports multi-command pipelines:
 - Memory management and dynamic allocation techniques
 - Command parsing and execution pipeline design
 - Building a mini operating system shell from scratch
+
+---
 
 - ### 👨‍💻 Author
 - Developed by a systems programming learner to deeply understand operating system concepts by implementing a Unix-like shell in C from scratch.
